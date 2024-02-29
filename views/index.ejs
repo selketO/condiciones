@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Facturas</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background-color: #f2f2f2; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .select-container {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .custom-select {
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: url('icono-de-flecha.png') no-repeat right center;
+      background-size: 12px;
+      cursor: pointer;
+    }
+    .select-container::after {
+      content: '';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #000;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reporte de Facturas</h1>
+
+  <div class="select-container">
+    <select id="clientFilter" class="custom-select" onchange="filterFunction()">
+      <option value="">Todos los clientes</option>
+      <% 
+        let uniqueClients = [];
+        records.forEach(record => {
+          if (!uniqueClients.includes(record.partner_id)) {
+            uniqueClients.push(record.partner_id);
+          }
+        });
+        uniqueClients.sort().forEach(client => { 
+      %>
+        <option value="<%= client %>"><%= client %></option>
+      <% }); %>
+    </select>
+  </div>
+
+  Buscar: <input type="text" id="searchInput" onkeyup="filterFunction()" placeholder="Buscar...">
+  Fecha: <input type="date" id="dateInput" onchange="filterFunction()" placeholder="Filtrar por fecha...">
+
+  <table id="recordsTable">
+    <thead>
+      <tr>
+        <th>Factura</th>
+        <th>Cliente</th>
+        <th>SKU</th>
+        <th>Nombre</th>
+        <th>Cantidad</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% records.forEach(record => { %>
+        <tr>
+          <td><%= record.move_id %></td>
+          <td><%= record.partner_id %></td>
+          <td><%= record.SKU %></td>
+          <td><%= record.name %></td>
+          <td><%= record.quantity %></td>
+          <td><%= record.price_subtotal %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+
+  <script>
+    function filterFunction() {
+      var inputSearch, inputClient, inputDate, filterSearch, filterClient, filterDate, table, tr, td, i;
+      inputSearch = document.getElementById("searchInput");
+      inputClient = document.getElementById("clientInput");
+      inputDate = document.getElementById("dateInput");
+      filterSearch = inputSearch.value.toUpperCase();
+      filterClient = inputClient.value.toUpperCase();
+      filterDate = inputDate.value;
+      table = document.getElementById("recordsTable");
+      tr = table.getElementsByTagName("tr");
+
+      for (i = 1; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td");
+        var txtValueName = td[3].textContent || td[3].innerText;
+        var txtValueClient = td[1].textContent || td[1].innerText;
+        var txtValueDate = td[6].textContent || td[6].innerText; // Asumiendo que la fecha está en la columna 6 (invisible)
+
+        if (txtValueName.toUpperCase().indexOf(filterSearch) > -1 && 
+            txtValueClient.toUpperCase().indexOf(filterClient) > -1 &&
+            (!filterDate || txtValueDate.startsWith(filterDate))) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
+  </script>
+</body>
+</html>
