@@ -1,6 +1,7 @@
 const express = require('express');
 const xmlrpc = require('xmlrpc');
 const app = express();
+const condicionesComerciales = require('./condiciones_comerciales.json');
 
 // Configura el motor de plantillas EJS y la carpeta pública
 app.set('view engine', 'ejs');
