@@ -1,7 +1,10 @@
 const express = require('express');
 const xmlrpc = require('xmlrpc');
 const app = express();
-const condicionesComerciales = require('./condiciones_comerciales.json');
+const fs = require('fs');
+
+// Cargar el JSON de condiciones comerciales
+let condicionesComerciales = JSON.parse(fs.readFileSync('./condiciones_comerciales.json', 'utf8'));
 
 // Configura el motor de plantillas EJS y la carpeta pública
 app.set('view engine', 'ejs');
@@ -82,12 +85,39 @@ const processedRecords = records.map(record => {
         name = productString;
       }
     }
+    // Ahora que tenemos clientName y sku, buscamos las condiciones
+
+    let condiciones = condicionesComerciales.find(condicion => {
+      return condicion.field1 === clientName && condicion.field2 === sku;
+    });
   
+    if (condiciones) {
+      console.log(`Condiciones encontradas: ${JSON.stringify(condiciones)}`);
+      record.feeForServiceAmount = parseFloat(condiciones.field4) * record.price_subtotal / 100;
+      record.recuperacionCostoAmount = parseFloat(condiciones.field5) * record.price_subtotal / 100;
+      record.feeLogisticoAmount = parseFloat(condiciones.field6) * record.price_subtotal / 100;
+      record.publicidadAmount = parseFloat(condiciones.field7) * record.price_subtotal / 100;
+      record.factorajeAmount = parseFloat(condiciones.field8) * record.price_subtotal / 100;
+      record.prontoPagoAmount = parseFloat(condiciones.field9) * record.price_subtotal / 100;    
+    } else {
+        record.feeForServiceAmount = 0;
+        record.recuperacionCostoAmount = 0;
+        record.feeLogisticoAmount = 0;
+        record.publicidadAmount = 0;
+        record.factorajeAmount = 0;
+        record.prontoPagoAmount = 0;
+    }
     return {
       move_id: secondMoveId,
       partner_id: clientName,
       SKU: sku,
       name: name,
+      feeForServiceAmount: record.feeForServiceAmount,
+      recuperacionCostoAmount: record.recuperacionCostoAmount,
+      feeLogisticoAmount: record.feeLogisticoAmount,
+      publicidadAmount: record.publicidadAmount,
+      factorajeAmount: record.factorajeAmount,
+      prontoPagoAmount: record.prontoPagoAmount,
       price_subtotal: record.price_subtotal,
       fecha: record.invoice_date
     };
