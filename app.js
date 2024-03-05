@@ -2,13 +2,14 @@ const express = require('express');
 const xmlrpc = require('xmlrpc');
 const app = express();
 const fs = require('fs');
+const ExcelJS = require('exceljs');
 
 // Cargar el JSON de condiciones comerciales
 let condicionesComerciales = JSON.parse(fs.readFileSync('./condiciones_comerciales.json', 'utf8'));
 
 // Configura el motor de plantillas EJS y la carpeta pública
 app.set('view engine', 'ejs');
-app.use(express.static('public')); // Para archivos estáticos como CSS y JS
+app.use('/public', express.static('public'));
 
 // Datos de conexión a tu instancia de Odoo
 const url = 'https://biancorelab.odoo.com';
@@ -62,20 +63,20 @@ const processedRecords = records.map(record => {
     let clientName = '';
   
     // Procesar move_id
-    if (Array.isArray(record.move_id) && record.move_id.length > 1) {
+    if (record.move_id && Array.isArray(record.move_id) && record.move_id.length > 1) {
       secondMoveId = record.move_id[1].trim();
       secondMoveId = secondMoveId.replace(/\s*\(.*?\)\s*/g, '').trim();
     }
   
     // Procesar partner_id para obtener el texto antes de la coma
-    if (Array.isArray(record.partner_id) && record.partner_id.length > 1) {
+    if (record.partner_id && Array.isArray(record.partner_id) && record.partner_id.length > 1) {
       clientName = record.partner_id[1].trim();
       // Quitar todo lo que está después de la coma, incluida la coma
       clientName = clientName.split(',')[0].trim();
     }
   
     // Procesar product_id
-    if (Array.isArray(record.product_id) && record.product_id.length > 1) {
+    if (record.product_id && Array.isArray(record.product_id) && record.product_id.length > 1) {
       const productString = record.product_id[1];
       const match = productString.match(/^\[(\d+)\]\s(.+)$/);
       if (match) {
@@ -122,7 +123,45 @@ const processedRecords = records.map(record => {
       fecha: record.invoice_date
     };
   });
+  // Endpoint para descargar los datos en formato Excel
+app.get('/descargar-excel', (req, res) => {
+    // Crear un nuevo libro de trabajo y una hoja
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Datos');
   
+    // Agregar fila de encabezados en la hoja de Excel
+    worksheet.addRow([
+      'Factura', 'Cliente', 'SKU', 'Nombre', 'Venta Bruta', 
+      'Fee for Service', 'Recuperación del Costo', 'Fee Logístico', 
+      'Publicidad', 'Factoraje', 'Pronto Pago', 'Venta Neta'
+    ]);
+  
+    // Agregar datos a la hoja de Excel
+    records.forEach(record => {
+      worksheet.addRow([
+        record.move_id, record.partner_id, record.SKU, record.name, 
+        record.price_subtotal, record.feeForServiceAmount, record.recuperacionCostoAmount, 
+        record.feeLogisticoAmount, record.publicidadAmount, record.factorajeAmount, 
+        record.prontoPagoAmount, record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount
+      ]);
+    });
+  
+    // Ajustar las columnas
+    worksheet.columns.forEach(column => {
+      column.width = column.header.length < 12 ? 12 : column.header.length;
+    });
+  
+    // Establecer estilos y formato según sea necesario...
+  
+    // Escribir el archivo Excel en el Response Object
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=' + 'reporte.xlsx');
+  
+    workbook.xlsx.write(res)
+      .then(() => {
+        res.end();
+      });
+  });
   
 
     // Inicia el servidor y muestra los registros en la ruta raíz
