@@ -92,7 +92,7 @@ const processedRecords = records.map(record => {
     });
   
     if (condiciones) {
-      console.log(`Condiciones encontradas: ${JSON.stringify(condiciones)}`);
+    //   console.log(`Condiciones encontradas: ${JSON.stringify(condiciones)}`);
       record.feeForServiceAmount = parseFloat(condiciones.field4) * record.price_subtotal / 100;
       record.recuperacionCostoAmount = parseFloat(condiciones.field5) * record.price_subtotal / 100;
       record.feeLogisticoAmount = parseFloat(condiciones.field6) * record.price_subtotal / 100;

@@ -11,6 +11,9 @@
       margin: 0;
       padding: 20px;
     }
+    #totalsRow{
+        border: 0px !important;
+    }
     h1 {
       color: #333;
       text-align: center;
@@ -66,11 +69,30 @@
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+    #totalsRow {
+      font-weight: bold;
+      background-color: #e7e7e7; /* Color de fondo para distinguir la fila de totales */
+      color: #333;
+      border: 0px;
+    }td#Blank {
+    background-color: #f4f4f4;
+    border: 0px;
+}
     #totalResults {
       font-size: 18px;
       font-weight: bold;
       color: #333;
       margin-top: 10px;
+    }
+    /* Estilos adicionales para hacer responsive el grupo de filtros */
+    @media (max-width: 768px) {
+      .filter-group {
+        flex-direction: column;
+      }
+      .filter-group > div {
+        width: 100%;
+        margin-bottom: 10px;
+      }
     }
   </style>
 </head>
@@ -108,42 +130,80 @@
       <input type="date" id="endDate" onchange="filterFunction()" placeholder="Fecha fin...">
     </div>
   </div>
-
+  <%
+  let totalVentaBruta = 0;
+  let totalFeeForService = 0;
+  let totalRecuperacionCosto = 0;
+  let totalFeeLogistico = 0;
+  let totalPublicidad = 0;
+  let totalFactoraje = 0;
+  let totalProntoPago = 0;
+  let totalVentaNeta = 0;
+  
+  records.forEach(record => {
+    totalVentaBruta += record.price_subtotal;
+    totalFeeForService += record.feeForServiceAmount || 0;
+    totalRecuperacionCosto += record.recuperacionCostoAmount || 0;
+    totalFeeLogistico += record.feeLogisticoAmount || 0;
+    totalPublicidad += record.publicidadAmount || 0;
+    totalFactoraje += record.factorajeAmount || 0;
+    totalProntoPago += record.prontoPagoAmount || 0;
+    totalVentaNeta += record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount;
+  });
+  %>
   <table id="recordsTable">
     <thead>
+        <tr id="totalsRow">
+            <td id="Blank"></td>
+            <td id="Blank"></td>
+            <td id="Blank"></td>
+            <td id="Blank"></td>
+
+            <!-- Totales por columna, calculados en el backend -->
+            <td id="totalVentaBruta"><%= Number(totalVentaBruta.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalFeeForService"><%= Number(totalFeeForService.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalRecuperacionCosto"><%= Number(totalRecuperacionCosto.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalFeeLogistico"><%= Number(totalFeeLogistico.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalPublicidad"><%= Number(totalPublicidad.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalFactoraje"><%= Number(totalFactoraje.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalProntoPago"><%= Number(totalProntoPago.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalVentaNeta"><%= Number(totalVentaNeta.toFixed(2)).toLocaleString('es-MX') %></td>
+
+          </tr>
       <tr>
         <th>Factura</th>
         <th>Cliente</th>
         <th>SKU</th>
         <th>Nombre</th>
-        <th>Subtotal</th>
+        <th>Venta Bruta</th>
         <th>Fee for Service</th>
         <th>Recuperación del Costo</th>
         <th>Fee Logístico</th>
         <th>Publicidad</th>
         <th>Factoraje</th>
         <th>Pronto Pago</th>
+        <th>Venta Neta</th>
       </tr>
     </thead>
     <tbody>
-      <% records.forEach(record => { %>
-        <tr>
-            <td><%= record.move_id %></td>
-            <td><%= record.partner_id %></td>
-            <td><%= record.SKU %></td>
-            <td><%= record.name %></td>
-            <td><%= record.price_subtotal.toFixed(2) %></td>
-            <td><%= record.feeForServiceAmount ? record.feeForServiceAmount.toFixed(2) : '0.00' %></td>
-            <td><%= record.recuperacionCostoAmount ? record.recuperacionCostoAmount.toFixed(2) : '0.00' %></td>
-            <td><%= record.feeLogisticoAmount ? record.feeLogisticoAmount.toFixed(2) : '0.00' %></td>
-            <td><%= record.publicidadAmount ? record.publicidadAmount.toFixed(2) : '0.00' %></td>
-            <td><%= record.factorajeAmount ? record.factorajeAmount.toFixed(2) : '0.00' %></td>
-            <td><%= record.prontoPagoAmount ? record.prontoPagoAmount.toFixed(2) : '0.00' %></td>
-    
-          <td style="display: none;"><%= record.fecha %></td> 
-        </tr>
-      <% }) %>
-    </tbody>
+        <% records.forEach(record => { %>
+          <tr class="data-row">
+              <td><%= record.move_id %></td>
+              <td><%= record.partner_id %></td>
+              <td><%= record.SKU %></td>
+              <td><%= record.name %></td>
+              <td><%= Number(record.price_subtotal.toFixed(2)).toLocaleString('es-MX') %></td>
+              <td><%= record.feeForServiceAmount ? Number(record.feeForServiceAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= record.recuperacionCostoAmount ? Number(record.recuperacionCostoAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= record.feeLogisticoAmount ? Number(record.feeLogisticoAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= record.publicidadAmount ? Number(record.publicidadAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= record.factorajeAmount ? Number(record.factorajeAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= record.prontoPagoAmount ? Number(record.prontoPagoAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td class="totalFila"><%= Number((record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount).toFixed(2)).toLocaleString('es-MX') %></td>
+            <td style="display: none;"><%= record.fecha %></td> 
+          </tr>
+        <% }) %>
+      </tbody>
   </table>
 
   <script>
@@ -158,28 +218,61 @@
       filterStartDate = startDate.value;
       filterEndDate = endDate.value;
       table = document.getElementById("recordsTable");
-      tr = table.getElementsByTagName("tr");
+      var dataRows = document.querySelectorAll("#recordsTable .data-row");
+
+// Variables para almacenar los totales calculados dinámicamente
+var totalVentaBruta = 0;
+var totalVentaNeta = 0;
+var totalFeeForService = 0;
+var totalRecuperacionCosto = 0;
+var totalFeeLogistico = 0;
+var totalPublicidad = 0;
+var totalFactoraje = 0;
+var totalProntoPago = 0;
+      
+
   
-      for (i = 1; i < tr.length; i++) {
-        td = tr[i].getElementsByTagName("td");
-        var txtValueName = td[3].textContent || td[3].innerText;
-        var txtValueClient = td[1].textContent || td[1].innerText;
-        var txtValueDate = td[td.length - 1].textContent || td[td.length - 1].innerText;
-  
-        var rowDate = new Date(txtValueDate);
-        var start = new Date(filterStartDate);
-        var end = new Date(filterEndDate);
-  
-        if (txtValueName.toUpperCase().indexOf(filterSearch) > -1 && 
-            txtValueClient.toUpperCase().indexOf(filterClient) > -1 &&
-            (!filterStartDate || rowDate >= start) &&
-            (!filterEndDate || rowDate <= end)) {
-          tr[i].style.display = "";
-        } else {
-          tr[i].style.display = "none";
-        }
-      }
+  // Iteras sobre las filas con datos usando la lista de dataRows
+  for (i = 0; i < dataRows.length; i++) {
+    td = dataRows[i].getElementsByTagName("td");
+    var txtValueName = td[3].textContent || td[3].innerText;
+    var txtValueClient = td[1].textContent || td[1].innerText;
+    var txtValueDate = td[td.length - 1].textContent || td[td.length - 1].innerText;
+
+    var rowDate = new Date(txtValueDate);
+    var start = new Date(filterStartDate);
+    var end = new Date(filterEndDate);
+
+    // Verifica si la fila debe mostrarse o no basado en los filtros aplicados
+    if (txtValueName.toUpperCase().indexOf(filterSearch) > -1 && 
+        txtValueClient.toUpperCase().indexOf(filterClient) > -1 &&
+        (!filterStartDate || rowDate >= start) &&
+        (!filterEndDate || rowDate <= end)) {
+      dataRows[i].style.display = "";
+            // Acumula los valores para los totales
+            totalVentaBruta += parseFloat(td[4].textContent.replace(/,/g, '')) || 0;
+      totalFeeForService += parseFloat(td[5].textContent.replace(/,/g, '')) || 0;
+      totalRecuperacionCosto += parseFloat(td[6].textContent.replace(/,/g, '')) || 0;
+      totalFeeLogistico += parseFloat(td[7].textContent.replace(/,/g, '')) || 0;
+      totalPublicidad += parseFloat(td[8].textContent.replace(/,/g, '')) || 0;
+      totalFactoraje += parseFloat(td[9].textContent.replace(/,/g, '')) || 0;
+      totalProntoPago += parseFloat(td[10].textContent.replace(/,/g, '')) || 0;
+      totalVentaNeta += parseFloat(td[11].textContent.replace(/,/g, '')) || 0;
+    } else {
+      dataRows[i].style.display = "none";
     }
+  }
+  document.getElementById('totalVentaBruta').textContent = new Intl.NumberFormat('es-MX').format(totalVentaBruta.toFixed(2));
+  document.getElementById('totalFeeForService').textContent = new Intl.NumberFormat('es-MX').format(totalFeeForService.toFixed(2));
+  document.getElementById('totalRecuperacionCosto').textContent = new Intl.NumberFormat('es-MX').format(totalRecuperacionCosto.toFixed(2));
+  document.getElementById('totalFeeLogistico').textContent = new Intl.NumberFormat('es-MX').format(totalFeeLogistico.toFixed(2));
+  document.getElementById('totalPublicidad').textContent = new Intl.NumberFormat('es-MX').format(totalPublicidad.toFixed(2));
+  document.getElementById('totalFactoraje').textContent = new Intl.NumberFormat('es-MX').format(totalFactoraje.toFixed(2));
+  document.getElementById('totalProntoPago').textContent = new Intl.NumberFormat('es-MX').format(totalProntoPago.toFixed(2));
+  document.getElementById('totalVentaNeta').textContent = new Intl.NumberFormat('es-MX').format(totalVentaBruta.toFixed(2));
+
+
+}
   </script>
 </body>
 </html>
