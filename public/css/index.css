@@ -107,12 +107,13 @@ body {
   }
   .button {
     --main-focus: #2d8cf0;
-    --font-color: #dedede;
+    --font-color: #ffffff;
     --bg-color-sub: #222;
     --bg-color: #F2441D;
     --main-color: #dedede;
-    position: relative;
+    position: absolute;
     width: 150px;
+    transform: translate(-11px, -23px);
     height: 40px;
     cursor: pointer;
     display: flex;
@@ -163,6 +164,5 @@ body {
   }
   
   .button:active {
-    transform: translate(3px, 3px);
     box-shadow: 0px 0px var(--main-color);
   }
