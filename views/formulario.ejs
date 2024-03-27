@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Solicitud de Descuento</title>
+    <link rel="stylesheet" href="../public/css/formulario.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-header">
+            
+            <img src="../public/img/LOGO BCL H.png" alt="Logo" class="form-logo">
+        </div>
+        <form id="discountRequestForm" action="/send-form" method="POST">
+            <h2>Solicitud de Descuento</h2>
+            <div class="group-header">
+                <div class="date-folio-group">
+                    <div class="input-group head">
+                        <label for="requestDate">Fecha:</label>
+                        <input type="text" id="requestDate" name="requestDate" required />
+                    </div>
+                    <div class="input-group head">
+                        <label for="requestFolio">Folio:</label>
+                        <input type="text" id="requestFolio" name="requestFolio" value="<%= folio %>" required readonly />
+
+                    </div>
+                </div>
+            </div>
+            <label for="clientFilter"><i class="fas fa-users"></i> Cliente:</label>
+            <select id="clientFilter" class="custom-select" onchange="loadProducts()" name="nameClient">
+                <option name="clientFilter" value="">Selecciona un cliente</option>
+                <% let uniqueClients=[]; records.forEach(record=> {
+                    if (!uniqueClients.includes(record.partner_id)) {
+                    uniqueClients.push(record.partner_id);
+                    }
+                    });
+                    uniqueClients.sort().forEach(client => {
+                    %>
+                    <option value="<%= client %>">
+                        <%= client %>
+                    </option>
+                    <% }); %>
+            </select>
+
+            <label for="discountReason">Descuentos:</label>
+            <select id="discountReason" name="discountReason" required>
+                <option value="Promociones">Promociones</option>
+                <option value="EDLP">EDLP</option>
+                <option value="Eventos cliente">Eventos cliente</option>
+                <option value="MKT">MKT</option>
+                <option value="Negociaciones Sell in">Negociaciones Sell in</option>
+                <option value="Activacion FDV">Activacion FDV</option>
+                <option value="Otros apoyos">Otros apoyos</option>
+            </select>
+
+            <label for="discountDescription">Descripcion del descuento:</label>
+            <textarea id="discountDescription" name="discountDescription" required></textarea>
+
+            <div class="input-row three-fields">
+                <div class="input-group group">
+                    <label for="applicantName">Solicitante:</label>
+                    <select id="applicantName" name="applicantName" required>
+                        <option value="edelgado@biancorelab.com">Eduardo Macias</option>
+                        <option value="mrivas@biancorelab.com">Mariana Rivas</option>
+                        <option value="erivera@biancorelab.com">Esperanza Rivera</option>
+                        <option value="amora@biancorelab.com">Alberto Mora</option>
+                        <option value="fpech@biancorelab.com">Felipe Pech</option>
+                        <option value="fvargas@biancorelab.com">Fernando Vargas</option>
+                    </select>
+                </div>
+                <div class="input-group group">
+                    <label for="numItems">Número de Partidas:</label>
+                    <select id="numItems" name="numItems">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="input-group group">
+                    <label for="totalDiscountAmount">Monto Total del Descuento (sin IVA):</label>
+                    <input type="number" id="totalDiscountAmount" name="totalDiscountAmount" required />
+                </div>
+            </div>
+            <div id="itemsContainer">
+                <!-- Los campos de las partidas se generan aquí con JavaScript -->
+            </div>
+
+            <button type="submit">Enviar Solicitud</button>
+        </form>
+    </div>
+
+    <script>
+
+        $(document).ready(function () {
+            // Actualización de partidas
+            $("#numItems").change(updateItems);
+            updateItems(); // Llama a updateItems al cargar para establecer el estado inicial
+
+            // Evento para recalcular el porcentaje de descuento cuando cambia el monto de descuento de alguna partida
+            $('#itemsContainer').on('input', '.discountAmount', function () {
+                if (!checkTotalDiscountExceeded()) {
+                    recalculateDiscountPercentages();
+                } else {
+                    alert("El monto total de descuento se ha superado.");
+                    $(this).val(0); // Reseteamos el valor del input que excede el monto
+                    recalculateDiscountPercentages();
+                }
+            });
+            // Evento para recalcular los porcentajes de descuento cuando cambia el monto total del descuento
+            $('#totalDiscountAmount').on('input', function () {
+                recalculateDiscountPercentages();
+            });
+            $('#discountRequestForm').on('submit', function(e) {
+            e.preventDefault(); // Previene el envío tradicional
+            
+            var formData = $(this).serialize(); // Serializa los datos del formulario
+            
+            // Envía los datos mediante AJAX al servidor
+            $.post('/send-form', formData, function(response) {
+                // Aquí manejas la respuesta. Por ejemplo:
+                alert('Formulario enviado'); // Muestra un mensaje simple o puedes mejorar la UX como prefieras
+                $('#discountRequestForm').trigger('reset'); // Limpia el formulario
+                // Aquí puedes agregar cualquier lógica adicional, como redireccionar o mostrar un mensaje más elaborado
+            }).fail(function() {
+                alert('Error al enviar el formulario. Intenta de nuevo.');
+            });
+        });
+            
+        });
+
+        function updateItems() {
+            const numItems = $("#numItems").val();
+            const itemsContainer = $("#itemsContainer");
+            itemsContainer.html(""); // Limpiar contenedor
+            itemsContainer.removeClass(); // Eliminar todas las clases anteriores
+
+            // Añadir clase basada en la cantidad de partidas
+            itemsContainer.addClass(`items-${numItems}`);
+            for (let i = 1; i <= numItems; i++) {
+                $("#itemsContainer").append(`
+            <div class="item-section">
+                <h4>Partida ${i}</h4>
+                <label for="productDescription${i}">Descripción del Producto:</label>
+                <select id="productDescription${i}" name="productDescription${i}" class="productDescription" required></select>
+                <label for="upc${i}">UPC:</label>
+                <input type="text" id="upc${i}" name="upc${i}" required readonly>
+                <label for="discountAmount${i}">Monto del Descuento:</label>
+                <input type="number" id="discountAmount${i}" name="discountAmount${i}" class="discountAmount" step="0.01" required>
+                <label for="discountPercentage${i}">% de Descuento:</label>
+                <input type="number" id="discountPercentage${i}" name="discountPercentage${i}" class="discountPercentage" step="0.01" required readonly>
+            </div>
+        `);
+            }
+            // Recargar los productos para los nuevos selectores generados
+            loadProducts();
+        }
+        function checkTotalDiscountExceeded() {
+            var totalDiscountAmount = parseFloat($('#totalDiscountAmount').val()) || 0;
+            var sumOfDiscounts = 0;
+
+            $('.discountAmount').each(function () {
+                sumOfDiscounts += parseFloat($(this).val()) || 0;
+            });
+
+            return sumOfDiscounts > totalDiscountAmount;
+        }
+
+        function recalculateDiscountPercentages() {
+            // Obtiene el monto total del descuento
+            var totalDiscountAmount = parseFloat($('#totalDiscountAmount').val()) || 0;
+
+            // Calcula y actualiza el porcentaje de descuento para cada partida
+            $('.item-section').each(function () {
+                var $this = $(this);
+                var itemDiscountAmount = parseFloat($this.find('.discountAmount').val()) || 0;
+                var discountPercentage = totalDiscountAmount > 0 ? (itemDiscountAmount / totalDiscountAmount * 100) : 0;
+                $this.find('.discountPercentage').val(discountPercentage.toFixed(2));
+            });
+        }
+
+
+        // Ajusta la implementación de loadProducts para reutilizar correctamente los productos y asignar el UPC
+        function loadProducts() {
+            var client = document.getElementById("clientFilter").value;
+            var products = []; // Esta debe ser tu lista de productos filtrados por cliente
+
+    <% records.forEach(record => { %>
+        if ("<%= record.partner_id %>" === client && !products.some(product => product.name === "<%= record.name %>")) {
+                    products.push({ name: "<%= record.name %>", sku: "<%= record.SKU %>" });
+                }
+    <% }); %>
+
+                $('.productDescription').each(function (index, select) {
+                    $(select).empty().append('<option value="">Selecciona un producto</option>');
+                    products.forEach(product => {
+                        $(select).append(`<option value="${product.name}" data-upc="${product.sku}">${product.name}</option>`);
+
+                    });
+                });
+
+            // Establecer manejador de eventos 'change' para cada select de descripción del producto
+            $('.productDescription').off('change').on('change', function () {
+                var selectedProductName = $(this).find('option:selected').val(); // Ahora el valor es el nombre del producto
+                var selectedProductUPC = $(this).find('option:selected').data('upc'); // Extrae el UPC usando el atributo de datos
+                var descriptionInputId = $(this).attr('id');
+                var upcInputId = $(this).attr('id').replace('productDescription', 'upc');
+
+                // Actualiza el campo de descripción con el nombre del producto
+                $(`#${descriptionInputId}`).val(selectedProductName); // Suponiendo que necesitas establecer este valor
+                // Actualiza el campo UPC con el código UPC
+                $(`#${upcInputId}`).val(selectedProductUPC);
+            });
+        }
+        document.addEventListener("DOMContentLoaded", (event) => {
+            const today = new Date().toISOString().substring(0, 10);
+            document.getElementById("requestDate").value = today;
+        });
+    </script>
+
+</body>
+
+</html>
