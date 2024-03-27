@@ -2,8 +2,8 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 class MailService {
     static async sendAuthorizationEmail(formData, pdfBuffer, token) {
-        const authorizationLink = `http://localhost:3000/autorizar/${token}`;
-        const noAuthorizationLink = `http://localhost:3000/no-autorizar/${token}`;
+        const authorizationLink = `https://condiciones.onrender.com/autorizar/${token}`;
+        const noAuthorizationLink = `https://condiciones.onrender.com/no-autorizar/${token}`;
         const htmlEmailContent = `
       <!DOCTYPE html>
       <html lang="es">
