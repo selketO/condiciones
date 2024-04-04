@@ -5,25 +5,6 @@ const condicionesComerciales = JSON.parse(fs.readFileSync('./condiciones_comerci
 const mongoose = require('mongoose');
 const Form = require('../models/PdfModel');
 
-async function buscarFormularioAutorizado(nameClient, upc) {
-  try {
-    const formAutorizado = await Form.findOne({
-      state: 'FormularioAutorizado',
-      'formData.nameClient': nameClient,
-      $or: [
-        {'formData.upc1': upc},
-        {'formData.upc2': upc},
-        {'formData.upc3': upc},
-        {'formData.upc4': upc},
-        {'formData.upc5': upc},
-      ]
-    }).sort({ 'createdAt': -1 }); // Ordena por la fecha de creación en orden descendente
-    return formAutorizado;
-  } catch (error) {
-    console.error('Error buscando el formulario autorizado más reciente:', error);
-    throw error;
-  }
-}
 // Crear un cliente XML-RPC para la autenticación
 const createClient = (path) => {
   return xmlrpc.createSecureClient({
@@ -59,8 +40,30 @@ const fetchData = async (model, domain, fields) => {
     });
   });
 };
+// Función para buscar un formulario autorizado que coincida con los criterios dados.
+async function buscarFormularioAutorizado(nameClient, upc, month, year) {
+  try {
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+    const formAutorizado = await Form.find({
+      state: 'FormularioAutorizado',
+      'formData.nameClient': nameClient,
+      createdAt: { $gte: startOfMonth, $lte: endOfMonth },
+      $or: [
+        {'formData.upc1': upc},
+        {'formData.upc2': upc},
+        {'formData.upc3': upc},
+        {'formData.upc4': upc},
+        {'formData.upc5': upc},
+      ]
+    });
+    return formAutorizado;
+  } catch (error) {
+    console.error('Error buscando los formularios autorizados del mes:', error);
+    throw error;
+  }
+}
 
-// Nueva función que obtiene registros de Odoo.
 const getOdooRecords = async () => {
   const domain = [
     ["state", "not in", ["draft", "cancel"]],
@@ -71,6 +74,10 @@ const getOdooRecords = async () => {
   const fields = ['move_id', 'partner_id', 'product_id', 'price_subtotal', 'invoice_date'];
   try {
     const records = await fetchData('account.invoice.report', domain, fields);
+    const recordsByYearMonth = {};
+    // Estructura para el seguimiento por día
+    const recordsByDay = {};
+    const recordsByClientProductMonth = {};
     const updatedRecords = await Promise.all(records.map(async (record) => {
         let sku = '';
         let name = '';
@@ -108,26 +115,64 @@ const getOdooRecords = async () => {
         });
       
         if (condiciones) {
-        //   console.log(`Condiciones encontradas: ${JSON.stringify(condiciones)}`);
           record.feeForServiceAmount = parseFloat(condiciones.field4) * record.price_subtotal / 100;
           record.recuperacionCostoAmount = parseFloat(condiciones.field5) * record.price_subtotal / 100;
           record.feeLogisticoAmount = parseFloat(condiciones.field6) * record.price_subtotal / 100;
-          record.publicidadAmount = parseFloat(condiciones.field7) * record.price_subtotal / 100;
           record.factorajeAmount = parseFloat(condiciones.field8) * record.price_subtotal / 100;
           record.prontoPagoAmount = parseFloat(condiciones.field9) * record.price_subtotal / 100;    
         } else {
             record.feeForServiceAmount = 0;
             record.recuperacionCostoAmount = 0;
             record.feeLogisticoAmount = 0;
-            record.publicidadAmount = 0;
             record.factorajeAmount = 0;
             record.prontoPagoAmount = 0;
         }
-        const formAutorizado = await buscarFormularioAutorizado(clientName, sku);
-
-        // Si se encuentra un formulario autorizado, usarlo para establecer publicidadAmount
-        if (formAutorizado) {
-          record.publicidadAmount = parseFloat(formAutorizado.formData.discountAmount1);
+        const invoiceDate = new Date(record.invoice_date);
+        const yearMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
+        const clientProductKey = `${clientName}-${sku}-${yearMonth}`; // Clave única para cada combinación de cliente-producto-mes
+    
+        // Inicializar el contador si aún no existe
+        if (!recordsByClientProductMonth[clientProductKey]) {
+          recordsByClientProductMonth[clientProductKey] = 0;
+        }
+    
+        // Incrementar el contador para cada registro correspondiente
+        recordsByClientProductMonth[clientProductKey]++;
+    
+        const formAutorizado = await buscarFormularioAutorizado(clientName, sku, invoiceDate.getMonth() + 1, invoiceDate.getFullYear());
+    
+        // Si se encuentran formularios autorizados, usarlos para establecer publicidadAmount
+        if (formAutorizado.length > 0) {
+          let totalDiscountAmount = 0;
+          for (let form of formAutorizado) {
+            // Comparamos el año y el mes en lugar del día
+            if (form.createdAt.getFullYear() === invoiceDate.getFullYear() && form.createdAt.getMonth() === invoiceDate.getMonth()) {
+              totalDiscountAmount += parseFloat(form.formData.discountAmount1);
+            }
+          }
+          const countOfRecords = recordsByClientProductMonth[clientProductKey];
+          const discountPerRecord = totalDiscountAmount / countOfRecords;
+          
+          // Asignamos el descuento dividido a publicidadAmount para el registro actual
+          record.publicidadAmount = discountPerRecord;
+        } else {
+          record.publicidadAmount = 0;
+        }
+        const date = new Date(record.invoice_date);
+        const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  
+        // Actualizar el seguimiento por año y mes
+        if (!recordsByYearMonth[yearMonth]) {
+          recordsByYearMonth[yearMonth] = [record];
+        } else {
+          recordsByYearMonth[yearMonth].push(record);
+        }
+  
+        // Actualizar el seguimiento por día
+        if (!recordsByDay[day]) {
+          recordsByDay[day] = 1; // Inicializa el conteo
+        } else {
+          recordsByDay[day]++; // Incrementa el conteo
         }
         return {
           move_id: secondMoveId,
@@ -145,6 +190,24 @@ const getOdooRecords = async () => {
           fecha: record.invoice_date
         };
       }));
+      console.log("Detalle de registros por año y mes:");
+      Object.keys(recordsByYearMonth).forEach(yearMonth => {
+        console.log(`Registros para ${yearMonth}:`, recordsByYearMonth[yearMonth].map(record => {
+          // Asumiendo que deseas mostrar algunos campos específicos de cada registro
+          return {
+            invoice_date: record.invoice_date,
+            invoice_name: record.move_id,
+            invoice_product: record.product_id,
+            // Otros campos relevantes que desees mostrar
+          };
+        }));
+      });
+  
+      // Imprimir en consola el conteo de registros por día
+      console.log("Conteo de registros por día:");
+      Object.keys(recordsByDay).forEach(day => {
+        console.log(`${day}: ${recordsByDay[day]} registros`);
+      });
       return updatedRecords;
   } catch (error) {
     console.error('Error fetching Odoo records:', error);
