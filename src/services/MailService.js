@@ -113,7 +113,7 @@ class MailService {
 
         let mailOptions = {
             from: process.env.EMAIL_FROM,
-            to: 'edelgado@biancorelab.com', // Asegúrate de tener este campo en tu formulario
+            to: 'francisco@biancorelab.com', // Asegúrate de tener este campo en tu formulario
             subject: 'Solicitud de nota de credito',
             html: htmlEmailContent,
             attachments: [
