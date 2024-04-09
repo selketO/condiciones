@@ -234,7 +234,7 @@ var totalProntoPago = 0;
   var porcentajePublicidad = totalVentaBruta ? (totalPublicidad / totalVentaBruta * 100) : 0;
   var porcentajeFactoraje = totalVentaBruta ? (totalFactoraje / totalVentaBruta * 100) : 0;
   var porcentajeProntoPago = totalVentaBruta ? (totalProntoPago / totalVentaBruta * 100) : 0;
-  var porcentajeProntoPago = totalVentaBruta ? (totalVentaNeta / totalVentaBruta * 100) : 0;
+  var porcentajeVentaNeta = totalVentaBruta ? (totalVentaNeta / totalVentaBruta * 100) : 0;
   
   document.getElementById('totalVentaBruta2').textContent = 100 + "%";
   document.getElementById('totalFeeForService2').textContent = porcentajeFeeForService.toFixed(2) + "%";
