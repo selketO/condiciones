@@ -64,6 +64,7 @@
   let totalFactoraje = 0;
   let totalProntoPago = 0;
   let totalVentaNeta = 0;
+  let totalDescuento = 0;
   
   records.forEach(record => {
     totalVentaBruta += record.price_subtotal;
@@ -74,6 +75,7 @@
     totalFactoraje += record.factorajeAmount || 0;
     totalProntoPago += record.prontoPagoAmount || 0;
     totalVentaNeta += record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount;
+    totalDescuento += record.feeForServiceAmount + record.recuperacionCostoAmount + record.feeLogisticoAmount + record.publicidadAmount + record.factorajeAmount + record.prontoPagoAmount;
   });
   %>
   <table id="recordsTable">
@@ -103,6 +105,7 @@
         <td id="totalPublicidad2"><%= ((totalPublicidad / totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalFactoraje2"><%= ((totalFactoraje / totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalProntoPago2"><%= ((totalProntoPago / totalVentaBruta) * 100).toFixed(2) %> %</td>
+        <td id="totalDescuento"><%= ((totalDescuento / totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalVentaNeta2"><%= ((totalVentaNeta / totalVentaBruta) * 100).toFixed(2) %> %</td>
     
       </tr>
@@ -120,6 +123,7 @@
             <td id="totalPublicidad"><%= Number(totalPublicidad.toFixed(2)).toLocaleString('es-MX') %></td>
             <td id="totalFactoraje"><%= Number(totalFactoraje.toFixed(2)).toLocaleString('es-MX') %></td>
             <td id="totalProntoPago"><%= Number(totalProntoPago.toFixed(2)).toLocaleString('es-MX') %></td>
+            <td id="totalDescuento"><%= Number(totalDescuento.toFixed(2)).toLocaleString('es-MX') %></td>
             <td id="totalVentaNeta"><%= Number(totalVentaNeta.toFixed(2)).toLocaleString('es-MX') %></td>
 
           </tr>
@@ -135,6 +139,7 @@
         <th>Inversion Variable</th>
         <th>Factoraje</th>
         <th>Pronto Pago</th>
+        <th>Total Descuentos</th>
         <th>Venta Neta</th>
       </tr>
     </thead>
@@ -152,6 +157,7 @@
               <td><%= record.publicidadAmount ? Number(record.publicidadAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
               <td><%= record.factorajeAmount ? Number(record.factorajeAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
               <td><%= record.prontoPagoAmount ? Number(record.prontoPagoAmount.toFixed(2)).toLocaleString('es-MX') : '0.00' %></td>
+              <td><%= Number(( record.feeForServiceAmount + record.recuperacionCostoAmount + record.feeLogisticoAmount + record.publicidadAmount + record.factorajeAmount + record.prontoPagoAmount).toFixed(2)).toLocaleString('es-MX')   %></td>
               <td class="totalFila"><%= Number((record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount).toFixed(2)).toLocaleString('es-MX') %></td>
             <td style="display: none;"><%= record.fecha %></td> 
           </tr>
@@ -234,6 +240,7 @@ var totalProntoPago = 0;
   var porcentajePublicidad = totalVentaBruta ? (totalPublicidad / totalVentaBruta * 100) : 0;
   var porcentajeFactoraje = totalVentaBruta ? (totalFactoraje / totalVentaBruta * 100) : 0;
   var porcentajeProntoPago = totalVentaBruta ? (totalProntoPago / totalVentaBruta * 100) : 0;
+  var porcentajeVentaNeta = totalVentaBruta ? (porcentajetotalDescuento / totalVentaBruta * 100) : 0;
   var porcentajeVentaNeta = totalVentaBruta ? (totalVentaNeta / totalVentaBruta * 100) : 0;
   
   document.getElementById('totalVentaBruta2').textContent = 100 + "%";
@@ -243,6 +250,7 @@ var totalProntoPago = 0;
   document.getElementById('totalPublicidad2').textContent = porcentajePublicidad.toFixed(2) + "%";
   document.getElementById('totalFactoraje2').textContent = porcentajeFactoraje.toFixed(2) + "%";
   document.getElementById('totalProntoPago2').textContent =porcentajeProntoPago.toFixed(2) + "%";
+  document.getElementById('totalDescuento2').textContent =porcentajetotalDescuento.toFixed(2) + "%";
   document.getElementById('totalVentaNeta2').textContent = porcentajeVentaNeta.toFixed(2) + "%";
 }
   </script>

@@ -190,24 +190,6 @@ const getOdooRecords = async () => {
           fecha: record.invoice_date
         };
       }));
-      console.log("Detalle de registros por año y mes:");
-      Object.keys(recordsByYearMonth).forEach(yearMonth => {
-        console.log(`Registros para ${yearMonth}:`, recordsByYearMonth[yearMonth].map(record => {
-          // Asumiendo que deseas mostrar algunos campos específicos de cada registro
-          return {
-            invoice_date: record.invoice_date,
-            invoice_name: record.move_id,
-            invoice_product: record.product_id,
-            // Otros campos relevantes que desees mostrar
-          };
-        }));
-      });
-  
-      // Imprimir en consola el conteo de registros por día
-      console.log("Conteo de registros por día:");
-      Object.keys(recordsByDay).forEach(day => {
-        console.log(`${day}: ${recordsByDay[day]} registros`);
-      });
       return updatedRecords;
   } catch (error) {
     console.error('Error fetching Odoo records:', error);

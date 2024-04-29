@@ -23,6 +23,7 @@ const createExcel = async (records) => {
     { header: 'Publicidad', key: 'publicidadAmount', width: 15 },
     { header: 'Factoraje', key: 'factorajeAmount', width: 15 },
     { header: 'Pronto pago', key: 'prontoPagoAmount', width: 15 },
+    { header: 'Total Descuentos', key: 'TotalDescuentos', width: 15 },
     { header: 'Venta Neta', key: 'VentaNeta', width: 15 },
     // ... más columnas según sea necesario ...
   ];
@@ -40,6 +41,7 @@ const createExcel = async (records) => {
       record.publicidadAmount = parseFloat(condiciones.field7) * record.price_subtotal / 100;
       record.factorajeAmount = parseFloat(condiciones.field8) * record.price_subtotal / 100;
       record.prontoPagoAmount = parseFloat(condiciones.field9) * record.price_subtotal / 100;
+      record.TotalDescuentos = (record.feeForServiceAmount + record.recuperacionCostoAmount + record.feeLogisticoAmount + record.publicidadAmount + record.factorajeAmount + record.prontoPagoAmount);
       record.VentaNeta = record.price_subtotal - (record.feeForServiceAmount + record.recuperacionCostoAmount + record.feeLogisticoAmount + record.publicidadAmount + record.factorajeAmount + record.prontoPagoAmount);
     } else {
       // Valores por defecto si no se encuentran condiciones
