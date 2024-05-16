@@ -74,127 +74,111 @@ const getOdooRecords = async () => {
   const fields = ['move_id', 'partner_id', 'product_id', 'price_subtotal', 'invoice_date'];
   try {
     const records = await fetchData('account.invoice.report', domain, fields);
-    const recordsByYearMonth = {};
-    // Estructura para el seguimiento por día
-    const recordsByDay = {};
-    const recordsByClientProductMonth = {};
-    const updatedRecords = await Promise.all(records.map(async (record) => {
-        let sku = '';
-        let name = '';
-        let secondMoveId = '';
-        let clientName = '';
-      
-        // Procesar move_id
-        if (Array.isArray(record.move_id) && record.move_id.length > 1) {
-          secondMoveId = record.move_id[1].trim();
-          secondMoveId = secondMoveId.replace(/\s*\(.*?\)\s*/g, '').trim();
-        }
-      
-        // Procesar partner_id para obtener el texto antes de la coma
-        if (Array.isArray(record.partner_id) && record.partner_id.length > 1) {
-          clientName = record.partner_id[1].trim();
-          // Quitar todo lo que está después de la coma, incluida la coma
-          clientName = clientName.split(',')[0].trim();
-        }
-      
-        // Procesar product_id
-        if (Array.isArray(record.product_id) && record.product_id.length > 1) {
-          const productString = record.product_id[1];
-          const match = productString.match(/^\[(\d+)\]\s(.+)$/);
-          if (match) {
-            sku = match[1];
-            name = match[2];
-          } else {
-            name = productString;
-          }
-        }
-        // Ahora que tenemos clientName y sku, buscamos las condiciones
-    
-        let condiciones = condicionesComerciales.find(condicion => {
-          return condicion.field1 === clientName && condicion.field2 === sku;
-        });
-      
-        if (condiciones) {
-          record.feeForServiceAmount = parseFloat(condiciones.field4) * record.price_subtotal / 100;
-          record.recuperacionCostoAmount = parseFloat(condiciones.field5) * record.price_subtotal / 100;
-          record.feeLogisticoAmount = parseFloat(condiciones.field6) * record.price_subtotal / 100;
-          record.factorajeAmount = parseFloat(condiciones.field8) * record.price_subtotal / 100;
-          record.prontoPagoAmount = parseFloat(condiciones.field9) * record.price_subtotal / 100;    
-        } else {
-            record.feeForServiceAmount = 0;
-            record.recuperacionCostoAmount = 0;
-            record.feeLogisticoAmount = 0;
-            record.factorajeAmount = 0;
-            record.prontoPagoAmount = 0;
-        }
-        const invoiceDate = new Date(record.invoice_date);
-        const yearMonth = `${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`;
-        const clientProductKey = `${clientName}-${sku}-${yearMonth}`; // Clave única para cada combinación de cliente-producto-mes
-    
-        // Inicializar el contador si aún no existe
-        if (!recordsByClientProductMonth[clientProductKey]) {
-          recordsByClientProductMonth[clientProductKey] = 0;
-        }
-    
-        // Incrementar el contador para cada registro correspondiente
-        recordsByClientProductMonth[clientProductKey]++;
-    
-        const formAutorizado = await buscarFormularioAutorizado(clientName, sku, invoiceDate.getMonth() + 1, invoiceDate.getFullYear());
-    
-        // Si se encuentran formularios autorizados, usarlos para establecer publicidadAmount
-        if (formAutorizado.length > 0) {
-          let totalDiscountAmount = 0;
-          for (let form of formAutorizado) {
-            // Comparamos el año y el mes en lugar del día
-            if (form.createdAt.getFullYear() === invoiceDate.getFullYear() && form.createdAt.getMonth() === invoiceDate.getMonth()) {
-              totalDiscountAmount += parseFloat(form.formData.discountAmount1);
-            }
-          }
-          const countOfRecords = recordsByClientProductMonth[clientProductKey];
-          const discountPerRecord = totalDiscountAmount / countOfRecords;
-          
-          // Asignamos el descuento dividido a publicidadAmount para el registro actual
-          record.publicidadAmount = discountPerRecord;
-        } else {
-          record.publicidadAmount = 0;
-        }
-        const date = new Date(record.invoice_date);
-        const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-  
-        // Actualizar el seguimiento por año y mes
-        if (!recordsByYearMonth[yearMonth]) {
-          recordsByYearMonth[yearMonth] = [record];
-        } else {
-          recordsByYearMonth[yearMonth].push(record);
-        }
-  
-        // Actualizar el seguimiento por día
-        if (!recordsByDay[day]) {
-          recordsByDay[day] = 1; // Inicializa el conteo
-        } else {
-          recordsByDay[day]++; // Incrementa el conteo
-        }
-        return {
-          move_id: secondMoveId,
-          partner_id: clientName,
-          SKU: sku,
-          name: name,
-          feeForServiceAmount: record.feeForServiceAmount,
-          recuperacionCostoAmount: record.recuperacionCostoAmount,
-          feeLogisticoAmount: record.feeLogisticoAmount,
-          publicidadAmount: record.publicidadAmount,
-          factorajeAmount: record.factorajeAmount,
-          prontoPagoAmount: record.prontoPagoAmount,
-          price_subtotal: record.price_subtotal,
-          VentaNeta: record.price_subtotal - record.feeForServiceAmount - record.recuperacionCostoAmount - record.feeLogisticoAmount - record.publicidadAmount - record.factorajeAmount - record.prontoPagoAmount,
-          fecha: record.invoice_date
-        };
-      }));
-      return updatedRecords;
+    const uniqueClients = [];
+    const totals = {
+      totalVentaBruta: 0,
+      totalFeeForService: 0,
+      totalRecuperacionCosto: 0,
+      totalFeeLogistico: 0,
+      totalPublicidad: 0,
+      totalFactoraje: 0,
+      totalProntoPago: 0,
+      totalDescuento: 0,
+      totalVentaNeta: 0,
+    };
+    const updatedRecords = records.map(record => {
+      const { move_id, partner_id, product_id, price_subtotal, invoice_date } = record;
+      const clientName = partner_id ? partner_id[1].split(',')[0].trim() : '';
+      const productString = product_id ? product_id[1] : '';
+      const skuMatch = productString.match(/^\[(\d+)\]\s(.+)$/);
+      const sku = skuMatch ? skuMatch[1] : '';
+      const name = skuMatch ? skuMatch[2] : productString;
+
+      if (!uniqueClients.includes(clientName)) uniqueClients.push(clientName);
+
+      const feeForServiceAmount = calculateFeeForService(clientName, sku, price_subtotal);
+      const recuperacionCostoAmount = calculateRecuperacionCosto(clientName, sku, price_subtotal);
+      const feeLogisticoAmount = calculateFeeLogistico(clientName, sku, price_subtotal);
+      const publicidadAmount = calculatePublicidad(clientName, sku, price_subtotal, invoice_date);
+      const factorajeAmount = calculateFactoraje(clientName, sku, price_subtotal);
+      const prontoPagoAmount = calculateProntoPago(clientName, sku, price_subtotal);
+
+      const totalDescuentos = feeForServiceAmount + recuperacionCostoAmount + feeLogisticoAmount + publicidadAmount + factorajeAmount + prontoPagoAmount;
+      const VentaNeta = price_subtotal - totalDescuentos;
+
+      totals.totalVentaBruta += price_subtotal;
+      totals.totalFeeForService += feeForServiceAmount;
+      totals.totalRecuperacionCosto += recuperacionCostoAmount;
+      totals.totalFeeLogistico += feeLogisticoAmount;
+      totals.totalPublicidad += publicidadAmount;
+      totals.totalFactoraje += factorajeAmount;
+      totals.totalProntoPago += prontoPagoAmount;
+      totals.totalDescuento += totalDescuentos;
+      totals.totalVentaNeta += VentaNeta;
+
+      return {
+        move_id: move_id ? move_id[1].replace(/\s*\(.*?\)\s*/g, '').trim() : '',
+        partner_id: clientName,
+        SKU: sku,
+        name: name,
+        price_subtotal: price_subtotal.toFixed(2),
+        feeForServiceAmount: feeForServiceAmount.toFixed(2),
+        recuperacionCostoAmount: recuperacionCostoAmount.toFixed(2),
+        feeLogisticoAmount: feeLogisticoAmount.toFixed(2),
+        publicidadAmount: publicidadAmount.toFixed(2),
+        factorajeAmount: factorajeAmount.toFixed(2),
+        prontoPagoAmount: prontoPagoAmount.toFixed(2),
+        totalDescuentos: totalDescuentos.toFixed(2),
+        VentaNeta: VentaNeta.toFixed(2),
+        fecha: invoice_date,
+      };
+    });
+
+    return { updatedRecords, uniqueClients, totals };
   } catch (error) {
     console.error('Error fetching Odoo records:', error);
-    throw error; // Re-throw the error to handle it in the calling function
+    throw error;
   }
+};
+
+const calculateFeeForService = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field4) * subtotal / 100) : 0;
+};
+
+const calculateRecuperacionCosto = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field5) * subtotal / 100) : 0;
+};
+
+const calculateFeeLogistico = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field6) * subtotal / 100) : 0;
+};
+
+const calculatePublicidad = (clientName, sku, subtotal, invoiceDate) => {
+  const formAutorizado = buscarFormularioAutorizado(clientName, sku, new Date(invoiceDate).getMonth() + 1, new Date(invoiceDate).getFullYear());
+  if (formAutorizado.length > 0) {
+    const totalDiscountAmount = formAutorizado.reduce((acc, form) => acc + parseFloat(form.formData.discountAmount1), 0);
+    const countOfRecords = recordsByClientProductMonth[`${clientName}-${sku}-${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}`];
+    return totalDiscountAmount / countOfRecords;
+  }
+  return 0;
+};
+
+const calculateFactoraje = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field8) * subtotal / 100) : 0;
+};
+
+const calculateProntoPago = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field9) * subtotal / 100) : 0;
+};
+
+module.exports = {
+  fetchData,
+  getOdooRecords
 };
 
 module.exports = {
