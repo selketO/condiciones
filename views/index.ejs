@@ -70,6 +70,7 @@
         <td id="totalRecuperacionCosto2"><%= ((totals.totalRecuperacionCosto / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalFeeLogistico2"><%= ((totals.totalFeeLogistico / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalPublicidad2"><%= ((totals.totalPublicidad / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
+        <td id="totalProvision2"><%= ((totals.totalProvision / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalFactoraje2"><%= ((totals.totalFactoraje / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalProntoPago2"><%= ((totals.totalProntoPago / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalDescuento2"><%= ((totals.totalDescuento / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
@@ -88,6 +89,7 @@
         <td id="totalRecuperacionCosto"><%= Number(totals.totalRecuperacionCosto.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalFeeLogistico"><%= Number(totals.totalFeeLogistico.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalPublicidad"><%= Number(totals.totalPublicidad.toFixed(2)).toLocaleString('es-MX') %></td>
+        <td id="totalProvision"><%=Number(totals.totalProvision.toFixed(2)).toLocaleString('es-MX') %> </td>
         <td id="totalFactoraje"><%= Number(totals.totalFactoraje.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalProntoPago"><%= Number(totals.totalProntoPago.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalDescuento"><%= Number(totals.totalDescuento.toFixed(2)).toLocaleString('es-MX') %></td>
@@ -104,6 +106,7 @@
         <th>Recuperación del Costo</th>
         <th>Fee Logístico</th>
         <th>Descuentos Adicionales</th>
+        <th>Provision</th>
         <th>Factoraje</th>
         <th>Pronto Pago</th>
         <th>Total Descuentos</th>
@@ -122,6 +125,7 @@
           <td><%= Number(record.recuperacionCostoAmount).toFixed(2) %></td>
           <td><%= Number(record.feeLogisticoAmount).toFixed(2) %></td>
           <td><%= Number(record.publicidadAmount).toFixed(2) %></td>
+          <td><%= Number(record.provisionAmount).toFixed(2) %></td>
           <td><%= Number(record.factorajeAmount).toFixed(2) %></td>
           <td><%= Number(record.prontoPagoAmount).toFixed(2) %></td>
           <td><%= Number(record.totalDescuentos).toFixed(2) %></td>
@@ -140,7 +144,7 @@
       var endDate = document.getElementById("endDate").value;
       var dataRows = document.querySelectorAll("#recordsTable .data-row");
 
-      var totalVentaBruta = 0, totalFeeForService = 0, totalRecuperacionCosto = 0, totalFeeLogistico = 0, totalPublicidad = 0, totalFactoraje = 0, totalProntoPago = 0, totalVentaNeta = 0, totalDescuentos = 0;
+      var totalVentaBruta = 0, totalFeeForService = 0, totalRecuperacionCosto = 0, totalFeeLogistico = 0, totalPublicidad = 0, totalFactoraje = 0, totalProntoPago = 0, totalProvision = 0, totalVentaNeta = 0, totalDescuentos = 0;
   
       for (var i = 0; i < dataRows.length; i++) {
         var cells = dataRows[i].getElementsByTagName("td");
@@ -162,6 +166,7 @@
           totalRecuperacionCosto += parseFloat(cells[6].textContent.replace(/,/g, '')) || 0;
           totalFeeLogistico += parseFloat(cells[7].textContent.replace(/,/g, '')) || 0;
           totalPublicidad += parseFloat(cells[8].textContent.replace(/,/g, '')) || 0;
+          totalProvision += parseFloat(cells[8].textContent.replace(/,/g, '')) || 0;
           totalFactoraje += parseFloat(cells[9].textContent.replace(/,/g, '')) || 0;
           totalProntoPago += parseFloat(cells[10].textContent.replace(/,/g, '')) || 0;
           totalDescuentos += parseFloat(cells[11].textContent.replace(/,/g, '')) || 0;
@@ -176,6 +181,7 @@
       document.getElementById('totalRecuperacionCosto').textContent = new Intl.NumberFormat('es-MX').format(totalRecuperacionCosto.toFixed(2));
       document.getElementById('totalFeeLogistico').textContent = new Intl.NumberFormat('es-MX').format(totalFeeLogistico.toFixed(2));
       document.getElementById('totalPublicidad').textContent = new Intl.NumberFormat('es-MX').format(totalPublicidad.toFixed(2));
+      document.getElementById('totalProvision').textContent = new Intl.NumberFormat('es-MX').format(totalProvision.toFixed(2));
       document.getElementById('totalFactoraje').textContent = new Intl.NumberFormat('es-MX').format(totalFactoraje.toFixed(2));
       document.getElementById('totalProntoPago').textContent = new Intl.NumberFormat('es-MX').format(totalProntoPago.toFixed(2));
       document.getElementById('totalDescuento').textContent = new Intl.NumberFormat('es-MX').format(totalDescuentos.toFixed(2));
@@ -191,6 +197,7 @@
       document.getElementById('totalRecuperacionCosto2').textContent = totalVentaBruta ? (totalRecuperacionCosto / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
       document.getElementById('totalFeeLogistico2').textContent = totalVentaBruta ? (totalFeeLogistico / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
       document.getElementById('totalPublicidad2').textContent = totalVentaBruta ? (totalPublicidad / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
+      document.getElementById('totalProvision2').textContent = totalVentaBruta ? (totalProvision / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
       document.getElementById('totalFactoraje2').textContent = totalVentaBruta ? (totalFactoraje / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
       document.getElementById('totalProntoPago2').textContent = totalVentaBruta ? (totalProntoPago / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";
       document.getElementById('totalDescuento2').textContent = totalVentaBruta ? (totalDescuentos / totalVentaBruta * 100).toFixed(2) + "%" : "0.00%";

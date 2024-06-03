@@ -81,6 +81,7 @@ const getOdooRecords = async () => {
       totalRecuperacionCosto: 0,
       totalFeeLogistico: 0,
       totalPublicidad: 0,
+      totalProvision: 0,
       totalFactoraje: 0,
       totalProntoPago: 0,
       totalDescuento: 0,
@@ -100,10 +101,11 @@ const getOdooRecords = async () => {
       const recuperacionCostoAmount = calculateRecuperacionCosto(clientName, sku, price_subtotal);
       const feeLogisticoAmount = calculateFeeLogistico(clientName, sku, price_subtotal);
       const publicidadAmount = calculatePublicidad(clientName, sku, price_subtotal, invoice_date);
+      const provisionAmount = calculateProvision(clientName, sku, price_subtotal);
       const factorajeAmount = calculateFactoraje(clientName, sku, price_subtotal);
       const prontoPagoAmount = calculateProntoPago(clientName, sku, price_subtotal);
 
-      const totalDescuentos = feeForServiceAmount + recuperacionCostoAmount + feeLogisticoAmount + publicidadAmount + factorajeAmount + prontoPagoAmount;
+      const totalDescuentos = feeForServiceAmount + recuperacionCostoAmount + feeLogisticoAmount + publicidadAmount + factorajeAmount + prontoPagoAmount + provisionAmount;
       const VentaNeta = price_subtotal - totalDescuentos;
 
       totals.totalVentaBruta += price_subtotal;
@@ -115,6 +117,7 @@ const getOdooRecords = async () => {
       totals.totalProntoPago += prontoPagoAmount;
       totals.totalDescuento += totalDescuentos;
       totals.totalVentaNeta += VentaNeta;
+      totals.totalProvision += provisionAmount;
 
       return {
         move_id: move_id ? move_id[1].replace(/\s*\(.*?\)\s*/g, '').trim() : '',
@@ -126,6 +129,7 @@ const getOdooRecords = async () => {
         recuperacionCostoAmount: recuperacionCostoAmount.toFixed(2),
         feeLogisticoAmount: feeLogisticoAmount.toFixed(2),
         publicidadAmount: publicidadAmount.toFixed(2),
+        provisionAmount: provisionAmount.toFixed(2),
         factorajeAmount: factorajeAmount.toFixed(2),
         prontoPagoAmount: prontoPagoAmount.toFixed(2),
         totalDescuentos: totalDescuentos.toFixed(2),
@@ -169,6 +173,11 @@ const calculatePublicidad = (clientName, sku, subtotal, invoiceDate) => {
 const calculateFactoraje = (clientName, sku, subtotal) => {
   const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
   return condition ? (parseFloat(condition.field8) * subtotal / 100) : 0;
+};
+
+const calculateProvision = (clientName, sku, subtotal) => {
+  const condition = condicionesComerciales.find(c => c.field1 === clientName && c.field2 === sku);
+  return condition ? (parseFloat(condition.field7) * subtotal / 100) : 0;
 };
 
 const calculateProntoPago = (clientName, sku, subtotal) => {

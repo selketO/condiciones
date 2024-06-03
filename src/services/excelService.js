@@ -25,6 +25,7 @@ const createExcel = async (records) => {
     { header: 'Pronto pago', key: 'prontoPagoAmount', width: 15 },
     { header: 'Total Descuentos', key: 'TotalDescuentos', width: 15 },
     { header: 'Venta Neta', key: 'VentaNeta', width: 15 },
+    { header: 'Fecha', key: 'fecha', width: 15 },
     // ... más columnas según sea necesario ...
   ];
 
