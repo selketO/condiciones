@@ -137,6 +137,60 @@
   </table>
 
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    fetchData();
+
+    document.getElementById("clientFilter").addEventListener("change", fetchData);
+    document.getElementById("searchInput").addEventListener("keyup", fetchData);
+    document.getElementById("startDate").addEventListener("change", fetchData);
+    document.getElementById("endDate").addEventListener("change", fetchData);
+});
+
+function fetchData() {
+    const inputSearch = document.getElementById("searchInput").value.toUpperCase();
+    const inputClient = document.getElementById("clientFilter").value.toUpperCase();
+    const startDate = document.getElementById("startDate").value;
+    const endDate = document.getElementById("endDate").value;
+
+    // Construye la URL con los parámetros adecuadamente codificados
+    const url = new URL(window.location.origin + '/api/records');
+    const params = { search: inputSearch, client: inputClient, startDate: startDate, endDate: endDate };
+    url.search = new URLSearchParams(params).toString();
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tableBody = document.getElementById('recordsTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos datos
+            data.forEach(record => {
+                const row = tableBody.insertRow();
+                // Asegúrate de que los índices de las celdas coincidan con la estructura de tu data
+                row.insertCell(0).textContent = record.move_id;
+                row.insertCell(1).textContent = record.partner_id;
+                row.insertCell(2).textContent = record.SKU;
+                row.insertCell(3).textContent = record.name;
+                row.insertCell(4).textContent = record.price_subtotal;
+                row.insertCell(5).textContent = record.feeForServiceAmount;
+                row.insertCell(6).textContent = record.recuperacionCostoAmount;
+                row.insertCell(7).textContent = record.feeLogisticoAmount;
+                row.insertCell(8).textContent = record.publicidadAmount;
+                row.insertCell(9).textContent = record.provisionAmount;
+                row.insertCell(10).textContent = record.factorajeAmount;
+                row.insertCell(11).textContent = record.prontoPagoAmount;
+                row.insertCell(12).textContent = record.totalDescuentos;
+                row.insertCell(13).textContent = record.VentaNeta;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading the data:', error);
+            alert('Error al cargar los datos: ' + error.message);
+        });
+}
     function filterFunction() {
       var inputSearch = document.getElementById("searchInput").value.toUpperCase();
       var inputClient = document.getElementById("clientFilter").value.toUpperCase();

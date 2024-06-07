@@ -14,7 +14,15 @@ exports.home = async (req, res) => {
     res.status(500).send('Error al cargar la página principal');
   }
 };
-
+exports.getRecords = async (req, res) => {
+  try {
+      const { updatedRecords } = await odooService.getOdooRecords();
+      res.json(updatedRecords);
+  } catch (error) {
+      console.error('Error al obtener los registros:', error);
+      res.status(500).send('Error al obtener los datos');
+  }
+};
 exports.form = async (req, res) => {
   try {
     const { updatedRecords: records } = await odooService.getOdooRecords();
