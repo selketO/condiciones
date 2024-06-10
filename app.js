@@ -26,7 +26,6 @@ app.get('/autorizar/:token',FormController.autorizar);
 app.get('/no-autorizar/:token',FormController.noautorizar );
 
 app.get('/', reportsController.home);
-app.get('/api/records', reportsController.getRecords);
 app.get('/descargar', reportsController.descargar);
 
 const port = process.env.PORT || 3000;

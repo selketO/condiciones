@@ -1,9 +1,6 @@
 const excelService = require('../services/excelService');
 const odooService = require('../services/odooService');
 const Form = require('../models/PdfModel');
-const conditionsLoader = require('../utils/conditionsLoader');
-const PDFDocument = require('pdfkit');
-
 // Función para renderizar la página principal con los registros de Odoo.
 exports.home = async (req, res) => {
   try {
@@ -12,15 +9,6 @@ exports.home = async (req, res) => {
   } catch (error) {
     console.error('Error en la página principal:', error);
     res.status(500).send('Error al cargar la página principal');
-  }
-};
-exports.getRecords = async (req, res) => {
-  try {
-      const { updatedRecords } = await odooService.getOdooRecords();
-      res.json(updatedRecords);
-  } catch (error) {
-      console.error('Error al obtener los registros:', error);
-      res.status(500).send('Error al obtener los datos');
   }
 };
 exports.form = async (req, res) => {

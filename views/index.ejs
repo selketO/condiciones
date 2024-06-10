@@ -71,8 +71,8 @@
         <td id="totalFeeLogistico2"><%= ((totals.totalFeeLogistico / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalPublicidad2"><%= ((totals.totalPublicidad / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalProvision2"><%= ((totals.totalProvision / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
-        <td id="totalFactoraje2"><%= ((totals.totalFactoraje / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
-        <td id="totalProntoPago2"><%= ((totals.totalProntoPago / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
+        <td style="display: none;" id="totalFactoraje2"><%= ((totals.totalFactoraje / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
+        <td style="display: none;" id="totalProntoPago2"><%= ((totals.totalProntoPago / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalDescuento2"><%= ((totals.totalDescuento / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
         <td id="totalVentaNeta2"><%= ((totals.totalVentaNeta / totals.totalVentaBruta) * 100).toFixed(2) %> %</td>
       </tr>
@@ -90,8 +90,8 @@
         <td id="totalFeeLogistico"><%= Number(totals.totalFeeLogistico.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalPublicidad"><%= Number(totals.totalPublicidad.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalProvision"><%=Number(totals.totalProvision.toFixed(2)).toLocaleString('es-MX') %> </td>
-        <td id="totalFactoraje"><%= Number(totals.totalFactoraje.toFixed(2)).toLocaleString('es-MX') %></td>
-        <td id="totalProntoPago"><%= Number(totals.totalProntoPago.toFixed(2)).toLocaleString('es-MX') %></td>
+        <td style="display: none;" id="totalFactoraje"><%= Number(totals.totalFactoraje.toFixed(2)).toLocaleString('es-MX') %></td>
+        <td style="display: none;" id="totalProntoPago"><%= Number(totals.totalProntoPago.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalDescuento"><%= Number(totals.totalDescuento.toFixed(2)).toLocaleString('es-MX') %></td>
         <td id="totalVentaNeta"><%= Number(totals.totalVentaNeta.toFixed(2)).toLocaleString('es-MX') %></td>
 
@@ -107,8 +107,8 @@
         <th>Fee Logístico</th>
         <th>Descuentos Adicionales</th>
         <th>Provision</th>
-        <th>Factoraje</th>
-        <th>Pronto Pago</th>
+        <th style="display: none;">Factoraje</th>
+        <th style="display: none;">Pronto Pago</th>
         <th>Total Descuentos</th>
         <th>Venta Neta</th>
       </tr>
@@ -126,8 +126,8 @@
           <td><%= Number(record.feeLogisticoAmount).toFixed(2) %></td>
           <td><%= Number(record.publicidadAmount).toFixed(2) %></td>
           <td><%= Number(record.provisionAmount).toFixed(2) %></td>
-          <td><%= Number(record.factorajeAmount).toFixed(2) %></td>
-          <td><%= Number(record.prontoPagoAmount).toFixed(2) %></td>
+          <td style="display: none;"><%= Number(record.factorajeAmount).toFixed(2) %></td>
+          <td style="display: none;"><%= Number(record.prontoPagoAmount).toFixed(2) %></td>
           <td><%= Number(record.totalDescuentos).toFixed(2) %></td>
           <td><%= Number(record.VentaNeta).toFixed(2) %></td>
           <td style="display: none;"><%= record.fecha %></td>
@@ -137,60 +137,6 @@
   </table>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-    fetchData();
-
-    document.getElementById("clientFilter").addEventListener("change", fetchData);
-    document.getElementById("searchInput").addEventListener("keyup", fetchData);
-    document.getElementById("startDate").addEventListener("change", fetchData);
-    document.getElementById("endDate").addEventListener("change", fetchData);
-});
-
-function fetchData() {
-    const inputSearch = document.getElementById("searchInput").value.toUpperCase();
-    const inputClient = document.getElementById("clientFilter").value.toUpperCase();
-    const startDate = document.getElementById("startDate").value;
-    const endDate = document.getElementById("endDate").value;
-
-    // Construye la URL con los parámetros adecuadamente codificados
-    const url = new URL(window.location.origin + '/api/records');
-    const params = { search: inputSearch, client: inputClient, startDate: startDate, endDate: endDate };
-    url.search = new URLSearchParams(params).toString();
-
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const tableBody = document.getElementById('recordsTable').getElementsByTagName('tbody')[0];
-            tableBody.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos datos
-            data.forEach(record => {
-                const row = tableBody.insertRow();
-                // Asegúrate de que los índices de las celdas coincidan con la estructura de tu data
-                row.insertCell(0).textContent = record.move_id;
-                row.insertCell(1).textContent = record.partner_id;
-                row.insertCell(2).textContent = record.SKU;
-                row.insertCell(3).textContent = record.name;
-                row.insertCell(4).textContent = record.price_subtotal;
-                row.insertCell(5).textContent = record.feeForServiceAmount;
-                row.insertCell(6).textContent = record.recuperacionCostoAmount;
-                row.insertCell(7).textContent = record.feeLogisticoAmount;
-                row.insertCell(8).textContent = record.publicidadAmount;
-                row.insertCell(9).textContent = record.provisionAmount;
-                row.insertCell(10).textContent = record.factorajeAmount;
-                row.insertCell(11).textContent = record.prontoPagoAmount;
-                row.insertCell(12).textContent = record.totalDescuentos;
-                row.insertCell(13).textContent = record.VentaNeta;
-            });
-        })
-        .catch(error => {
-            console.error('Error loading the data:', error);
-            alert('Error al cargar los datos: ' + error.message);
-        });
-}
     function filterFunction() {
       var inputSearch = document.getElementById("searchInput").value.toUpperCase();
       var inputClient = document.getElementById("clientFilter").value.toUpperCase();
