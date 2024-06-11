@@ -137,44 +137,61 @@
   </table>
 
   <script>
-    function filterFunction() {
-      var inputSearch = document.getElementById("searchInput").value.toUpperCase();
-      var inputClient = document.getElementById("clientFilter").value.toUpperCase();
-      var startDate = document.getElementById("startDate").value;
-      var endDate = document.getElementById("endDate").value;
-      var dataRows = document.querySelectorAll("#recordsTable .data-row");
+  function filterFunction() {
+    var inputSearch = document.getElementById("searchInput").value.toUpperCase();
+    var inputClient = document.getElementById("clientFilter").value.toUpperCase();
+    var startDate = document.getElementById("startDate").value;
+    var endDate = document.getElementById("endDate").value;
+    var dataRows = document.querySelectorAll("#recordsTable .data-row");
 
-      var totalVentaBruta = 0, totalFeeForService = 0, totalRecuperacionCosto = 0, totalFeeLogistico = 0, totalPublicidad = 0, totalFactoraje = 0, totalProntoPago = 0, totalProvision = 0, totalVentaNeta = 0, totalDescuentos = 0;
-  
-      for (var i = 0; i < dataRows.length; i++) {
-        var cells = dataRows[i].getElementsByTagName("td");
-        var txtValueName = cells[3].textContent || cells[3].innerText;
-        var txtValueClient = cells[1].textContent || cells[1].innerText;
-        var txtValueDate = cells[cells.length - 1].textContent || cells[cells.length - 1].innerText;
+    dataRows.forEach(row => {
+      var cells = row.getElementsByTagName("td");
+      var txtValueName = cells[3].textContent || cells[3].innerText;
+      var txtValueClient = cells[1].textContent || cells[1].innerText;
+      var txtValueDate = cells[cells.length - 1].textContent || cells[cells.length - 1].innerText;
 
-        var rowDate = new Date(txtValueDate);
-        var start = new Date(startDate);
-        var end = new Date(endDate);
+      var rowDate = new Date(txtValueDate);
+      var start = new Date(startDate);
+      var end = new Date(endDate);
 
-        if (txtValueName.toUpperCase().indexOf(inputSearch) > -1 && 
+      // Verificar primero si la fila debe permanecer oculta
+      if (row.getAttribute('data-hidden') === "true") {
+        row.style.display = "none";
+      } else {
+        // Aplicar filtro si no está marcada para permanecer oculta
+        if (txtValueName.toUpperCase().indexOf(inputSearch) > -1 &&
             txtValueClient.toUpperCase().indexOf(inputClient) > -1 &&
             (!startDate || rowDate >= start) &&
             (!endDate || rowDate <= end)) {
-          dataRows[i].style.display = "";
-          totalVentaBruta += parseFloat(cells[4].textContent.replace(/,/g, '')) || 0;
-          totalFeeForService += parseFloat(cells[5].textContent.replace(/,/g, '')) || 0;
-          totalRecuperacionCosto += parseFloat(cells[6].textContent.replace(/,/g, '')) || 0;
-          totalFeeLogistico += parseFloat(cells[7].textContent.replace(/,/g, '')) || 0;
-          totalPublicidad += parseFloat(cells[8].textContent.replace(/,/g, '')) || 0;
-          totalProvision += parseFloat(cells[8].textContent.replace(/,/g, '')) || 0;
-          totalFactoraje += parseFloat(cells[9].textContent.replace(/,/g, '')) || 0;
-          totalProntoPago += parseFloat(cells[10].textContent.replace(/,/g, '')) || 0;
-          totalDescuentos += parseFloat(cells[11].textContent.replace(/,/g, '')) || 0;
-          totalVentaNeta += parseFloat(cells[12].textContent.replace(/,/g, '')) || 0;
+          row.style.display = "";
         } else {
-          dataRows[i].style.display = "none";
+          row.style.display = "none";
         }
       }
+    });
+
+    // Función para actualizar totales, aquí puedes ajustar o añadir la lógica necesaria
+    updateTotals();
+  }
+  function updateTotals() {
+    var visibleRows = document.querySelectorAll("#recordsTable .data-row:not([style*='display: none'])");
+    var totalVentaBruta = 0, totalFeeForService = 0, totalRecuperacionCosto = 0, totalFeeLogistico = 0,
+        totalPublicidad = 0, totalProvision = 0, totalFactoraje = 0, totalProntoPago = 0, 
+        totalDescuentos = 0, totalVentaNeta = 0;
+
+    visibleRows.forEach(row => {
+      var cells = row.getElementsByTagName("td");
+      totalVentaBruta += parseFloat(cells[4].textContent.replace(/,/g, '')) || 0;
+      totalFeeForService += parseFloat(cells[5].textContent.replace(/,/g, '')) || 0;
+      totalRecuperacionCosto += parseFloat(cells[6].textContent.replace(/,/g, '')) || 0;
+      totalFeeLogistico += parseFloat(cells[7].textContent.replace(/,/g, '')) || 0;
+      totalPublicidad += parseFloat(cells[8].textContent.replace(/,/g, '')) || 0;
+      totalProvision += parseFloat(cells[9].textContent.replace(/,/g, '')) || 0;
+      totalFactoraje += parseFloat(cells[10].textContent.replace(/,/g, '')) || 0;
+      totalProntoPago += parseFloat(cells[11].textContent.replace(/,/g, '')) || 0;
+      totalDescuentos += parseFloat(cells[12].textContent.replace(/,/g, '')) || 0;
+      totalVentaNeta += parseFloat(cells[13].textContent.replace(/,/g, '')) || 0;
+    });
 
       document.getElementById('totalVentaBruta').textContent = new Intl.NumberFormat('es-MX').format(totalVentaBruta.toFixed(2));
       document.getElementById('totalFeeForService').textContent = new Intl.NumberFormat('es-MX').format(totalFeeForService.toFixed(2));
