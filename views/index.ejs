@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="header">
-    <img src="../public/img/LOGO_BCL.png" alt="Logo" class="header-logo">
+    <img src="../public/img/LOGO_BCL (1).png" alt="Logo" class="header-logo">
     <h1 class="header-title">Reporte de Condiciones Comerciales</h1>
     <a href="/formulario" class="cssbuttons-io-button" role="button">
       ir al formulario
@@ -169,10 +169,17 @@
         }
       }
     });
-
+    document.getElementById('filtroCliente').value = document.getElementById("clientFilter").value;
+  document.getElementById('filtroFechaInicio').value = document.getElementById("startDate").value;
+  document.getElementById('filtroFechaFin').value = document.getElementById("endDate").value;
+  document.getElementById('filtroBusqueda').value = document.getElementById("searchInput").value;
     // Función para actualizar totales, aquí puedes ajustar o añadir la lógica necesaria
     updateTotals();
   }
+  document.getElementById('formDescarga').onsubmit = function() {
+  // Actualizar los filtros justo antes de la descarga
+  filterFunction();
+};
   function updateTotals() {
     var visibleRows = document.querySelectorAll("#recordsTable .data-row:not([style*='display: none'])");
     var totalVentaBruta = 0, totalFeeForService = 0, totalRecuperacionCosto = 0, totalFeeLogistico = 0,
